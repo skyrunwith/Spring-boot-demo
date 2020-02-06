@@ -1,0 +1,56 @@
+1.Redis安裝
+2.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Redis问题集：
+1.为什么要用缓存：高性能（速度快）、高并发（并发量高）
+2.Redis和Memcached有什么区别：Redis支持复杂数据结构，支持原生集群、Redis单核线程在处理100K一下数据，优势更明显，反之同理
+3.Redis的线程模型：内部使用file event handler，采用IO多路复用机制同事监听多个socket，将产生事件的socket压入内存队列中，事件分派器根据socket上的事件来处理
+4.为啥Redis单线程模型效率这么高？a.纯内存 b.核心是基于非阻塞的IO多路复用机制 c.C语言实现 d.单线程避免了线程切换、竞争问题
+5.Redis数据类型：String、hash(结构化数据)、list(列表型数据结构：粉丝列表、文章评论列表; 可以实现高性能分页)、
+	set(无序集合、自动去重)，可以玩交、并、差集
+	sorted set(排序的set、写进去可以给分数，根据分数排序)
+6.Redis过期策略有哪些：定期删除+惰性删除、内存淘汰机制（推荐LRU算法优先：即优先删除更早过期时间的Key）
+7.如何保证Redis的高并发和高可用？
+	a.高并发：依靠主从架构、单主写入数据(几万QPS)、多从查询数据(10WQPS)
+	b.高可用：如果主从架构部署、加上哨兵就行
+	c.如何容量大量数据：redis集群(几十万QPS)
+8.主从架构：读写分离、水平扩容支持高并发
+	a.核心机制：
+		异步复制数据到slave、slave周期性地确认自己每次复制的数据量
+		master可配置多个slave、slave之间也可以相互通信
+		复制过程中master和slave都不会block自己的工作，但是复制完成时需要删除旧数据及，加载新数据集时会暂停对外服务
+		slave用来做横向扩容、读写分离、提供读的吞吐量
+		主从架构必须开启master持久化(slave如果做master的数据热备，master宕机后可能造成数据丢失)
+		master数据备份方案必须要做：高可用机制
+	b.复制核心原理
+		salve 发送 PSYNC 给master
+		主线程用缓冲区保存这段时间内的写请求、子线程master生成RDB文件发送给slave，发送完毕后将缓冲区数据也发给salve
+		slave删除旧数据、写入磁盘、加载到内存(Block)，进入增量同步模式
+		主从断点续传：复制过程中断网，如果找到offset可以接着上次连接的地方,则继续复制,否咋全量复制：run id、offset
+		无磁盘化复制：repl-diskless-sync yes repl-diskless-sync-delay 5
+		过期Key处理：如果master过期了一个key，则模拟发送del给salve
+	c.复制完整流程：
+		salve启动时，会保存master node信息(host、ip),salve内部定时任务检查是否有新的master要连接和复制：requirepass masterauth
+		全量复制：复制超时(默认60s)或者缓存区持续消耗超过64M或者一次性超过256MB，则复制失败(client-output-buffer-limit slave 256MB 64MB 60)
+		增量复制：全量复制过程中，如果网络断掉，重新连接后会进行增量复制;master根据psync中的offect从backlog(默认1M)中获取数据;RDB、AOF
+		headerbeat:master 10s发送一次heartbeat， slave 1s 发送一次heartbeat
+		异步复制：master先写，再异步发送到slave
+	d.Redis如何做到高可用：
+		365天内，99.99%的时间都可以提供服务，则是高可用的
+		redis高可用架构：failover 故障转移(主备切换)
+	

@@ -1,0 +1,124 @@
+Spring Security概要：
+	1.Spring Security从两个角度解决安全问题：
+		使用Servlet中的Filter保护Web请求并限制URL访问级别
+		使用Spring AOP保护方法调用
+	2.过滤Web请求：DelegatingFilterProxy 将代理逻辑委托给 springSecurityFilterChain(FilterChainProxy) 实现
+		实现方式：web.xml配置 DelegatingFilterProxy 或 继承 AbstractSecurityWebApplicationInitializer 自动注册 DelegatingFilterProxy
+	3.开启Security：
+		@EnableWebSecurity、@EnableWebMvcSercurity(该注解配置了一个Spring mvc参数解析器，能够通过带有 @AuthenticationPrincipal 的注解获取用户的 principal,如果使用Spring表单绑定标签库，还可以自动添加 CSRF)
+		注解生效必须配置：WebSecurityConfigurer 或 WebSecurityConfigurerAdapter
+	4.查询信息服务(即用户信息查询)：
+		configure(AuthenticationManagerBuilder auth)
+		基于内存：auth.inMemoryAuthentication().withUser()
+		基于数据库表(自定义SQL和使用默认SQL):auth.jdbcAuthentication().dataSource(dataSource);
+		基于LDAP验证：auth.ldapAuthentication()
+		自定义用户存储：
+			重载configure方法,调用: builder.userDetailsService(dbUserDetailsService);
+			实现UserDetailsService接口，返回UserDetails对象
+	5.拦截请求配置：
+		定义如何保护路径的配置方法：access(String)、anonymous()、authenticated() 、denyAll() 、fullyAuthenticated()、hasAnyAuthority(String...)、hasAnyRole(String...)、hasAuthority(String) 、hasIpAddress(String) 、hasRole(String)、not()、permitAll() 、rememberMe() 
+		保护粒度分析：Ip、认证、remember me、role、权限、匿名
+		Spel保护：access方法实现Spel表达式保护：spel有11个内置函数，与定义保护路径的方法类似(除了accsee、anonymous、not)，多了principal
+		强制通道安全性：
+			requiresChannel：通过该方法能够为URL模式声明所要求的通道
+			requiresInsecure、requiresSecure
+		防止跨站请求伪造：Thymeleaf页面在form中默认添加csrf参数，jsp需要添加${_scrf.parameterName}
+	6.认证用户：
+		formLogin：默认登录页
+		httpBasic：启用Http Basic认证
+			HTTP Basic 认证（ HTTP Basic Authentication ）会直接通过 HTTP 请求本身，对要访问应用程序的用户进行认证
+		rememberMe：启动remmember-me
+		logout：退出，logoutSuccessUrl：退出成功URL
+	7.总结：
+		借助一系列内置Filter，Spring Security能够控制Web资源访问，包括Spring MVC控制器。借助JAVA配置模型，我们不必直接处理Filter，能够非常简洁的声明Web安全性功能
+		认证用户提供了多种选项：内存、数据库、LDAP，自定义认证用户服务。
+Spring Security保护方法应用：保护方法调用、使用表达式定义安全规则、创建表达式计算器
+	1.注解保护方法：
+		Spring Security自带的@Secured注解
+			@Secured：如果没有认证通过则抛出异常，缺点：它是Spring特定的注解
+		JSR-250的@RolesAllowed注解
+			@RolseAllowed：比@Secured优势在于它是Java校准定义的注解
+		表达式驱动注解：@PreAuthorize @PostAuthorize @PreFilter @PostFilter
+		启动注解方式
+			@EnableGlobalMethodSecurity
+	2.使用表达式实现方法级别安全性：在注解中使用SPEL表达式验证，这种方式能是验证更多的事，比如验证参数
+		@PreAuthorize：方法调用前验证权限
+		@postAuthorize：方法调用后验证权限，如果表达式为false，则抛出异常
+		@PreFilter：事先对方法的参数进行过滤
+		@PostFilter：事后对方法的参数进行过滤
+		定义许可计算器：当表达式变得很长以后，表达式就会笨重、复杂且难以测试，许可计算器将解决这一问题
+			实现 PermissionEvaluator 接口，重写hasPermission方法
+			重定义 DefaultMethod-SecurityExpressionHandler Bean；默认情况下，它会使用DenyAllPermissionEvaluator，将自定义的PermissionEvalustor放入Handler中
+Spring Security基本原理：
+	源码查看过程 @EnableWebSecurity -> WebSecurityConfiguration -> WebSecurity
+	1.WebSecurityConfigurer 的 setFilterChainProxySecurityConfigurer
+		set方法参数注入 List<SecurityConfigurer> (该参数为继承 WebSecurityConfigurerAdapter 的类)
+		初始化 WebSecurity
+		调用 webSecurity.apply 将 WebSecurity 与 SecurityConfigurer 关联
+		webSecurityConfigurers 赋值给 this.webSecurityConfigurers
+		springSecurityFilterChain 中调用 WebSecurity.build 方法创建 Filter
+	2. WebSecurity: WebSecurityConfigurer 调用 webSecurity.apply 方法后
+		apply 方法调用自身 add 方法，将 SecurityConfigurer 放入 变量名为 configurers 的 LinkedHashMap 中
+		WebSecurityConfigurer.springSecurityFilterChain 方法中调用 webSecurity.build 方法创建 springSecurityFilterChain
+		build 方法调用 AbstractSecurityBuilder.doBuild 方法 
+		dobuild 方法调用 SecurityConfigurer.init 方法
+	
+		dobuild 调用 this.performBuild 方法(在 securityFilterChainBuilders 初始化完成之后)
+			遍历 securityFilterChainBuilders 中的 HttpSecurity，调用 httpSecurity.build 方法 构建 SecurityFilterChain
+			以 SecurityFilterChain 为参数构建 FilterChainProxy 
+			返回 FilterChainProxy
+	3.WebSecurityConfigurerAdapter：SecurityConfigurer.init 方法调用后
+		init 方法中调用 getHttp(),初始化 HttpSecurity，并调用 configure （至此 configure 调用分析完成）
+		init 方法调用 webSecurity.addSecurityFilterChainBuilder , 将 HttpSecurity 放入 WebSecurity 变量名为 securityFilterChainBuilders 的集合中
+	4.FilterChainProxy：
+		继承自 Filter
+		当请求到达的时候，FilterChainProxy会调用dofilter()方法，会遍历所有的SecurityFilterChain，对匹配到的url，则一一调用SecurityFilterChain中的filter做认证授权。FilterChainProxy的dofilter()中调用了doFilterInternal()方法
+	5.HttpSecurity：生成SecurityFilterChain
+		HttpSecurity与WebSecurity一样，都继承了AbstractConfiguredSecurityBuilder类，而WebSecurity的build和doBuild方法和LinkedHashMap属性，均来自AbstractConfiguredSecurityBuilder，故HttpSecurity的build方法代码与WebSecurity的相同，区别在于LinkedHashMap存储的东西不同，HttpSecurity正是通过如此来生成SecurityFilterChain类的。
+	总结：
+		1.Spring Security启动过程中通过WebSecurityConfiguration实例化WebSecurity
+		2.WebSecurityConfiguration会将使用者编写的WebSecurityConfig类放入WebSecurity中的LinkedHashMap中
+		3.在构建WebSecurity的时候，会调用WebSecurity的doBuild()方法，这个方法是一个核心方法
+		4.doBuild中的init方法将会调用LinkedHashMap中元素的init方法（这里的元素是WebSecurityConfig），然后WebSecurityConfig的init方法会调用configure方法，调用configure方法后，将会初始化HttpSecurity构建各种Filter，这时HttpSecurity将会加入WebSecurity中。
+		5.doBuild中的init方法调用完后将会调用下一个performBuild()方法，该方法会获取到HttpSecurity调用其doBuild方法构造SecurityFilterChain
+		6.将获取到的SecurityFilterChain构建成一个FilterChainProxy类，作为Spring Security的顶层filter
+		7.至此Spring Security的Filter构建完成
+实战：
+	1.继承WebSecurityConfigurerAdapter,实现configure方法：configure(WebSecurity)、configure(HttpSecurity)、configure(AuthenticationManagerBuilder) 
+	2.实现UserDetailsService，自定义用户存储、认证、密码加密
+	3.替换重写login、logout页面，根据用户请求资源格式(.html或.do)判断返回JSON或者跳转到登录页
+	5.自定义Login Filter逻辑：继承 AbstractAuthenticationProcessingFilter
+		验证码 Filter：
+			验证码类、验证码异常( 继承 AuthenticationException )
+			验证码接口：服务器端生成Image，流形式返回给客户端
+			验证Filter：继承OncePerRequestFilter
+			验证逻辑：
+				服务器生成image、存入session、filter验证、验证不通过抛出异常、验证通过移除session验证码并且继续执行Filter
+			
+	6.自定义处理器：
+		exceptionHandling：
+			无权限 Handler：AccessDeniedHandler  
+			未认证 Handler：AuthenticationEntryPoint
+		Login Filter：
+			认证失败 Handler：AuthenticationFailureHandler
+				通过 AbstractAuthenticationFilterConfigurer.failureHandler 设置
+			认证成功 Handler：AuthenticationSuccessHandler 
+				通过 AbstractAuthenticationFilterConfigurer.successHandler 设置
+				(默认处理器 SavedRequestAwareAuthenticationSuccessHandler、ForwardAuthenticationSuccessHandler)
+		Logout Filter：
+			登录成功 Handler：LogoutSuccessHandler
+	7.session 超时：server.servlet.session.timeout
+	8.限制最大登录数：maximunSessions() maxSessionPreventsLogin() 踢出策略：expiredSessionStrategy(SessionInformationExpiredStrategy )
+	9.踢出用户：
+		sessionRegistry.getAllPrincipals(); 获取所有 principal 信息
+		通过 principal.getUsername 判断是否等于输入值，获取到指定用户的 principal
+		通过 sessionRegistry.getAllSessions(principal, false)获取该 principal 上的所有 session
+		通过 sessionInformation.expireNow() 使得 session 过期
+	10.退出登录：
+		默认步骤：
+			使当前session失效
+			清除与当前用户有关的remember-me记录
+			清空当前 SecurityContext
+			重定向到logout 指定url
+	11.session共享
+		引入redis依赖，加上 @EnableRedisHttpSession 注解

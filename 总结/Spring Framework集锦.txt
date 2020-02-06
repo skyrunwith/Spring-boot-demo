@@ -1,0 +1,18 @@
+1.Spring Bean什么周期
+  Spring Bean的什么周期指初始化到销毁的过程，由IOC容器管理。
+  四种方式跟踪Bean的什么周期：@Bean、InitailingBean和DisposableBean接口、@PostConstruct和@PreDestroy、BeanPostProcessor接口
+  单列和多例Bean在Spring中管理的区别：Spring只会创建多例Bean，不会管理这个组件
+2.Spring组件注册
+  a.@Bean方式
+  b.@Component+@ComponentScan
+  c.@ComponentScan可配置扫描策略
+  d.@ComponentScans可配置多扫描策略
+  e.TypeFilter接口自定义扫描策略
+  f.@Scope组件作用域(sigleton、prototype、request、session)
+  g.@Lazy懒加载(针对Singleton使用)
+  h.Conditional条件注册组件
+  i.@Profile根据不同环境注册组件
+  j.@Import引入组件
+  k.ImportSelector接口引入
+  l.ImportBeanDefinitionRegistrar引入组件（重要）
+  m.FactoryBean注册组件

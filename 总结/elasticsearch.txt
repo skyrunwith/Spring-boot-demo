@@ -1,0 +1,69 @@
+//数据类型比较
+Relational DB -> Databases -> Tables -> Rows -> Columns
+Elasticsearch -> Indices -> Types -> Documents -> Fields
+//创建索引--格式:/index
+http://localhost:9200/bdfus?pretty
+//索引文档--格式：PUT /index/type/id
+http://localhost:9200/bdfus/employee/1 
+{
+	"first_name" : "Douglas",
+	"last_name" : "Fir",
+	"age" : 35,
+	"about": "I like to build cabinets",
+	"interests": [ "forestry" ]
+}
+//检索文档--格式GET /index/type/id 
+	我们通过HTTP方法 GET  来检索文档，同样的，我们可以使用 DELETE  方法删除文档，
+	使用 HEAD  方法检查某文档是否存在。如果想更新已存在的文档，我们只需再 PUT  一次。
+http://localhost:9200/bdfus/employee/1 
+//简单搜索--格式 id变为_search
+http://localhost:9200/bdfus/employee/_search
+//query string--格式：?q=key:value
+http://localhost:9200/bdfus/employee/_search?q=first_name:Douglas
+//Query DSL--格式
+http://localhost:9200/bdfus/employee/_search
+{
+	"query" : {
+		"match" : {
+		"last_name" : "Smith"
+		}
+	}
+}
+//全文搜索（匹配rock或climbing即可，可用评分判定匹配程度大小）
+{
+	"query" : {
+		"match" : {
+			"about" : "rock climbing"
+		}
+	}
+}
+//短语搜索(精确查询match_phrase)
+{
+"query" : {
+	"match_phrase" : {
+		"about" : "rock climbing"
+		}
+	}
+}
+
+{
+	"query" : {
+		"match_phrase" : {
+			"about" : "rock climbing"
+		},
+		"highlight":{
+			"fields":{
+				"about"：{} 
+			}
+		}
+	}
+}
+//聚合搜索
+{
+  "aggs": { 
+    "all_interests": {  //聚合名称
+      "terms": { "field": "interests" } //聚合类型(terms是分组（group by），avg是求平均数)
+    }
+  }
+}
+

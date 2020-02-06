@@ -1,0 +1,42 @@
+Es服务器配置：
+	创建用户：useradd elsearch -m
+	创建ES目录：/opt/es, /opt/es/data, /opt/es/logs
+	下载ES.tar.gz
+	解压：tar -xzvf xx.tar.gz
+	修改ES配置：vi config/elasticsearch.yml
+	cluster.name：es
+	node.name: node-101
+	node.master: true
+	node.data: true
+	path.data: /logs
+	path.logs: /logs
+	network.host: 0.0.0.0
+	http:port: 9200
+	discover.zen.ping.unicast.hosts: ["192.168.0.101", "192.168.0.102"]
+	修改/ect/sysctl.conf
+	添加：
+		vm.max_map_count=262144
+	修改Java运行权限
+	chmod 755 /usr/local/java
+	修改/etc/security/limit.d/20-nproc.conf
+*	   soft    nofile    65536
+*     	   hard    nofile    65536
+	使用修改生效: sysctl -p
+	启动ES: ./bin/elasticsearch -d
+	验证：jps
+	最小节点数（默认计算方式（总结点数/2）+1）
+	PUT /_cluster/settings
+	{
+		"persistent" : {
+			"discovery.zen.minimum_master_nodes" : 2
+		}
+	}			
+	集群恢复配置
+	gateway.recover_after_nodes: 8
+	geteway.expected_nodes: 10
+	geteway.recover_after_time: 5m 
+	单播代替组播
+	discovery.zen.ping.unicast.hosts: ["host1", "host2:port"]
+	can not be imported as a dangling index, as index with same name already exists in cluster metadata
+
+	

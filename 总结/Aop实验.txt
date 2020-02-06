@@ -1,0 +1,7 @@
+定义 Interface Performance 
+用@Asepect注解定义切面类：
+Class Audience  Method：silenceCellPhones、taleSeats、applause、demandRefund
+@Around和@PoinCut
+Advice传参
+统计播放次数：TrackCount：
+	BlackDisc

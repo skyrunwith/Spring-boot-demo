@@ -1,0 +1,5 @@
+Spring MVC:
+	1.请求流程：request -> DispatcherServlet -> handler -> controller -> ModelAndView ->DispatcherServlet -> ViewResovler -> view -> response
+	2.初始化：
+		Servlet 3.0环境中，容器会在类路径中查找 ServletContainerInitializer 的实现类，Spring 提供默认实现 SpringServletContainerInitializer，这个类会反过来查找 WebApplicationInitializer 的实现类 AbstractAnnotationConfigDispatcherServletInitializer。在 AbstractAnnotationConfigDispatcherServletInitializer 的子类中配置DispatcherServlet和web.xml一样
+	3.两个应用上下文：WebConfig(DispatcherServlet) 和 RootConfig(ContextLoadListener)

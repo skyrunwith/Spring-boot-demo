@@ -1,0 +1,8 @@
+启动master
+./sbin/start-master.sh
+
+启动worker
+./bin/spark-class org.apache.spark.deploy.worker.Worker spark://DESKTOP-8OTUF1G.localdomain:7077
+
+提交作业
+./bin/spark-submit --master spark://DESKTOP-8OTUF1G.localdomain:7077 --class WordCount /home/spark/test-file/helloSpark.txt

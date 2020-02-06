@@ -1,0 +1,30 @@
+//搜索
+Shift+Shift+N ALL
+Ctrl+N Class
+Ctrl+Shift+N File
+Ctrl+Shift+Alt+n Symbol查找方法
+Ctrl+Shift+A 搜索Action
+Alt+Home 打开Navigation Bar
+//编辑
+Ctrl+E 打开编辑的文本
+Ctrl+Shift+E 打开最近编辑的文本
+Ctrl+W Alt+J 批量修改某个文本
+Shift+F11 书签
+Alt+F1 定位文件
+Alt+1 ctrl+shift+左右箭头 修改分割线
+Ctrl+F4 退出Language Injection模式
+Shift+F6重命名
+Ctrl+d 复制行
+Ctrl+y 删除行
+Ctrl+F4 关闭当前编辑面板
+//调试
+Alt+F8 计算表达式
+//源码
+Ctrl+B 查看某个方法被哪些地方调用、跳进方法内部
+Ctrl+Alt+B 查看一个类/方法的实现类/方法的实现类/方法
+Ctrl+Alt+F7 查看一个里面定义的变量在那些地方被调用
+Ctrl+F12 或Alt+F7查看一个类里面有哪些方法
+
+Ctrl+H 类关系图
+Ctrl+Alt+H 查看某个方法的调用链关系
+Ctrl+· 调出设置样式界面

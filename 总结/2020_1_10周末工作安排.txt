@@ -1,0 +1,31 @@
+周末技术学习安排：
+AOP
+	a.术语
+		通知(Advice)
+		连接点(Join point)
+		切点(Poincut)
+		切面(Aspect)=通知+切点
+		引入(Introduction)
+		织入(Weaving)：把切面应用到目标对象兵创建新的代理对象的过程
+	b.AOP支持；
+		类型：基于代理的经典Spring AOP、纯POJO切面、@AspectJ注解驱动的切面、注入式AspectJ切面
+		工具：Java实现了Spring通知、也可以通过特有的AOP语言实现(AspectJ、JBoss)、
+		Spring运行时通知对象：Sping在运行期把切面织入到Spring管理的bean中（好处“不需要特殊的编译器来织入Spring AOP的切面）
+		重点：Spring只支持方法级别的连接点：因为Spring的AspectJ自动代理仅仅使用@AspectJ作为切面的指导、切面依然是基于代理的
+	c.切点选择连接点；
+		切点指示器(Spring AOP仅支持AspectJ的切点指示器的一个子集)：实际执行匹配(execution)、限制匹配:其他
+		@arg、
+		execution：返回值、类、方法名、参数类型
+		this、@target、@within、@annotation、
+		bean
+		@Poincut:统一定义切点
+		@EnableAspectJAutoProxy
+	d.注解创建切面：
+		定义切面、环绕通知、处理通知中的参数
+		注解引入新功能(为对象增加新方法)
+	e.xml创建切面
+	f.注入AspectJ切面：由于Spring只支持方法类型的切点
+		
+Shiro
+模拟高并发
+日志框架

@@ -1,0 +1,53 @@
+**我们也要形成一篇文章，在写文章的过程中是梳理我们对其原理更深入理解的过程。
+搭建服务注册中心：
+	1.添加依赖包server
+	2.添加@EnableEurekaServer注解
+	3.配置instance，serviceUrl
+高可用注册中心：
+	1.eureka注册中心将自己作为服务向其他注册中心注册自己
+	2.serviceUrl填写其他注册中心地址
+注册服务提供者：
+	1.添加依赖包client
+	2.添加@EnableDiscoveryClient注解
+	3.配置serviceUrl，application.name
+服务发现与消费：
+	1.服务发现由Eureka客户端完成
+	2.服务消费由ribbon完成
+	3.引入ribbon依赖包
+	4.添加@LoadBalance注解
+	5.使用RestTemplate访问服务提供者
+	注：Eureka Server依托于强一致性提供高可用性功能
+		Eureka Client处理注册的发现（向注册中心发送心跳更新服务租约，服务注册是服务单元向注册中心登记，服务发现是服务调用方向服务中心咨询服  务，并获取实例清单）
+Eureka基础架构：从服务注册开始到服务调用、各个元素所涉及到的一些重要通信行为
+	1.服务提供者：服务注册、服务同步、服务续约
+	2.服务消费者：获取服务、服务调用、服务下线
+	3.注册中心：失效剔除（每隔60s将清单中90s内没有续约的服务剔除出去）、自我保护（统计心跳失败的比例在15分钟内是否低于85%，Eureka会将注册信息保护起来，所以可能会出现调用失败情况）
+源码分析：理解各个通信行为如何实现
+	1.@EnableDiscoveryClient作用：开启DiscoveryClient(class)的实例
+	2.Spring Cloud为什么可以方便地切换整合其他服务治理框架：Spring Cloud服务治理提供DiscoveryClient(interface)接口
+	3.EurekaDiscoveryClient继承Spring Cloud DiscoveryClient(instance)接口，并将EurekaClient接口进行封装、真正实现发现服务功能的是继承 	EurekaClient的DiscoveryClient(class)
+	4.EurekaClient功能如下：向Server 注册服务、续约、下线、查询服务实例清单
+	--
+	5.Region、Zone、ServiceUrls关系：一个微服务应用属于一个region，一个region有多个zone，一个zone可以有多个serviceUrls
+	6.服务注册：由DisconveryClient实现，通过构造类调用initScheduledTasks()方法实现注册行为，真正调用注册的是register()方法
+	7.服务获取与续约：initScheduledTasks()中实现服务获取(独立实现在一个if判断中)与续约（与注册成对出现,即在一个if判断中）
+	8.注册中心：ApplicationResource类中addInstance()方法中调用InstanceRegistry.register()方法,register中将注册事件传播出去，并调用super.register()	
+配置详解：
+	1.客户端：服务注册类配置、服务实例类配置(大多数情况都是针对客户端配置)，eureka.client作为前缀
+	2.服务端：大多数情况下不需要修改，eureka.server作为前缀
+服务注册类配置：
+	1.指定注册中心：serviceUrl，生产环境中需要加入安全校验信息
+	2.其他配置：EurekaClientConfigBean中定义配置参数和默认值
+服务实例类配置:
+	1.EurekaInstanceConfigBean中定义
+	2.元数据(服务名称、实例名称、实例IP、端口等)，InstanceInfo 定义了元数据 定义了元数据，自定义元数据可以通过metedateaMap修改
+	3.实例名配置：InstanceInfo中instanceId
+	4.端点配置：可以配置一些端点URL，比如修改URL的路径
+	5.健康监测：Eureka客户端健康监测交给/health端点，实现更加全面的健康维护
+	6.其他配置: EurekaInstanceConfigBean中定义
+负载均衡
+基本概念：
+	1.服务端负载均衡：服务端维护服务清单，通过心跳检测剔除故障的服务端节点，客户端发送请求到负载均衡设备时、通过算法转发到其中一台服务器
+	2.客户端负载均衡：客户端维护自己要访问服务清单，这些服务来自于注册中心，通过心跳检测维护服务清单的健康性（需要注册中心配置）
+	3.负载均衡作用：是系统高可用、网络压力的缓解和处理能力扩容的重要手段之一
+	4.Spring Cloud 负载均衡实现：服务提供者只需注册到注册中心，服务消费者使用@LoadBalance 注解修饰过得RestTemplate访问接口
