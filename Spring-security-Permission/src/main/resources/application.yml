@@ -1,0 +1,10 @@
+#spring:
+#  datasource:
+#      driver-class-name: com.mysql.jdbc.Driver
+#      username: root
+#      url: jdbc:mysql://192.168.0.107:3306/security?useUnicode=yes&characterEncoding=UTF-8&useSSL=false
+#      password: 123456
+server:
+  servlet:
+    session:
+      timeout: 360
