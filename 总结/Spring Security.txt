@@ -95,10 +95,7 @@ Spring Security基本原理：
 			验证逻辑：
 				服务器生成image、存入session、filter验证、验证不通过抛出异常、验证通过移除session验证码并且继续执行Filter
 			
-	6.自定义处理器：
-		exceptionHandling：
-			无权限 Handler：AccessDeniedHandler  
-			未认证 Handler：AuthenticationEntryPoint
+	6.自定义登录：
 		Login Filter：
 			认证失败 Handler：AuthenticationFailureHandler
 				通过 AbstractAuthenticationFilterConfigurer.failureHandler 设置
@@ -107,13 +104,29 @@ Spring Security基本原理：
 				(默认处理器 SavedRequestAwareAuthenticationSuccessHandler、ForwardAuthenticationSuccessHandler)
 		Logout Filter：
 			登录成功 Handler：LogoutSuccessHandler
-	7.session 超时：server.servlet.session.timeout
-	8.限制最大登录数：maximunSessions() maxSessionPreventsLogin() 踢出策略：expiredSessionStrategy(SessionInformationExpiredStrategy )
-	9.踢出用户：
-		sessionRegistry.getAllPrincipals(); 获取所有 principal 信息
-		通过 principal.getUsername 判断是否等于输入值，获取到指定用户的 principal
-		通过 sessionRegistry.getAllSessions(principal, false)获取该 principal 上的所有 session
-		通过 sessionInformation.expireNow() 使得 session 过期
+	Remember Me:
+		定义持久化bean：PersistentTokenRepository 
+		HttpSecurity 中设置 Remember Me：持久化bean、过期时间
+	短信验证码登录：模仿Spring Security账号密码登录逻辑代码来实现一套自己的认证逻辑。
+		验证流程：
+			AbstractAuthenticationProcessingFilter -> AuthenticationManager -> Provider -> UserDetailService -> UserDetails -> Authentication 
+		实战逻辑：
+			生成验证码：定义验证码Class，Controller 中生成，并放入 session
+			定义 AbstractAuthenticationToken 
+			定义 验证码验证逻辑 Filter
+			定义 AbstractAuthenticationProcessingFilter
+			定义 Provider
+			定义 UserDetailService
+			验证流程组合配置 SecurityConfigurerAdapter
+			应用：httpEntity.apply(SecurityConfigurerAdapter)
+	Session 管理
+		Session 超时：server.servlet.session.timeout
+		并发控制：maximunSessions() maxSessionPreventsLogin() 踢出策略：expiredSessionStrategy(SessionInformationExpiredStrategy )
+		踢出用户：
+			sessionRegistry.getAllPrincipals(); 获取所有 principal 信息
+			通过 principal.getUsername 判断是否等于输入值，获取到指定用户的 principal
+			通过 sessionRegistry.getAllSessions(principal, false)获取该 principal 上的所有 session
+			通过 sessionInformation.expireNow() 使得 session 过期
 	10.退出登录：
 		默认步骤：
 			使当前session失效
@@ -122,3 +135,5 @@ Spring Security基本原理：
 			重定向到logout 指定url
 	11.session共享
 		引入redis依赖，加上 @EnableRedisHttpSession 注解
+	权限控制：
+		
