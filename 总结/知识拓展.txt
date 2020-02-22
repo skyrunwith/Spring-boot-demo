@@ -1,0 +1,11 @@
+1.知识拓展
+	Growth Hack	
+	Spring 版本发布记录和 Spring 版本演进计划，去GitHub官网看
+	《十二要素应用宣言（12-factor Apps）》中文版：https://12factor.net/zh_cn/
+	《Cloud Native Application》电子书：https://pivotal.io/platform-as-a-service/migrating-to-cloud-native-application-architectures-ebook
+	Spring 5开始，WebFlux提供了Reactive的Web Client：WebClinet ，使用方式和RestTemplate基本类似，但性能更强，吞吐更好
+1.必备知识：
+	Spring 版本管理：主版本号.次版本号.增量版本号.里程碑版本号
+	Spring Cloud 版本管理：主版本号.增量版本号
+	Spring Cloud版本发布记录：https://github.com/spring-cloud/spring-cloud-release/releases ，从中我们可清晰看到Spring Cloud版本发布的时间及先后顺序
+	Spring Cloud版本演进计划：https://github.com/spring-cloud/spring-cloud-release/milestones，从中我们可了解Spring Cloud的版本演进计划，例如计划什么时间点发布什么版本等。

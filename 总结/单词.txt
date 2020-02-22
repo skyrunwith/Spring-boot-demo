@@ -27,3 +27,8 @@ rather 当然
 pass 通过; 传递; 使到达 pass to 传到
 Customizations 自定义
 retrieval 检索；恢复
+glitches 故障
+Represent 代表
+peer 同等的人，同辈
+lease 租约
+frequency 频率

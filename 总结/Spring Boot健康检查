@@ -1,0 +1,8 @@
+Spring Boot健康检查：
+
+info：显示任意的应用信息
+metrics：展示当前应用的指标信息 true
+mappings：显示所有@RequestMapping路径的整理列表
+trace：显示trace信息（默认为最新的一些HTTP请求）
+health：展示应用的健康信息
+beans：显示一个应用中所有Spring Beans的完整列表

@@ -1,0 +1,19 @@
+Spring Cloud Study:
+	1.分布式应用构建
+		提供者-消费者：使用RestTemplate实现分布式应用调用
+		Spring Boot/Cloud 开发套路：三板斧：加依赖、加注解、写配置
+		问题：没有Dashboard、地址硬编码、负载均衡、服务容错、服务故障定位、用户认证和授权
+	2.Spring Boot Actuator实现监控(Dashboard：Spring-boot-admin)：解决1中 没有Dashboard 问题
+	3.服务注册与发现：解决 地址硬编码 问题
+		原理初探：用MYSQL做服务注册组件；服务启动、停止都往Mysql插一条记录，这样消费者就能找到服务了。消费者调用时，只需向数据库发送SQL即可找到服务提供者。
+		完善的服务组件应具备的能力：注册表存放实例信息、服务注册、服务发现、服务检查
+		客户端：注册、获取实例信息(instance)、心跳检测、重新注册、客户端缓存
+		总结：注册、同步、续约、获取、失效剔除(服务检查)、调用、下线
+	4.Eureka深入：
+		同步方式：Eureka Server同时也是Eureka Client。多个Eureka Server实例，相之间通过增量复制的方式，来实现服务注册表中数据的同步，Eureka Server默认保证在90秒内，Eureka Server集群内的所有实例中的数据达到一致
+		高可用、自我保护、用户认证、第三方注册（Eureka本身是一个基于REST的服务，所以通过REST API，我们也可以实现自定义注册）
+		用户认证：加入security，注册中心service-url中加入用户名密码
+			有完备的数据权限机制；
+			开发人员在一个Dashboard上可以查看、管理所有他有权管理的微服务（这里的Dashboard并不是指Eureka Server的界面，而是自己另外做的界面）；
+			在Dashboard的某个地方能直接切换环境，例如一键切换开发、测试、生产环境等
+		

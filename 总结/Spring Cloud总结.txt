@@ -1,50 +1,83 @@
 **我们也要形成一篇文章，在写文章的过程中是梳理我们对其原理更深入理解的过程。
-搭建服务注册中心：
+搭建服务注册中心：注册中心有默认值：如defaulZone
 	1.添加依赖包server
 	2.添加@EnableEurekaServer注解
-	3.配置instance，serviceUrl
-高可用注册中心：
-	1.eureka注册中心将自己作为服务向其他注册中心注册自己
-	2.serviceUrl填写其他注册中心地址
+	3.配置 instance.hostname:localhost，serviceUrl
+	4.Eureka Server本身也集成了Eureka Client，彼此通过Eureka Client同步数据给其它实例又或者从其他实例同步数据
 注册服务提供者：
 	1.添加依赖包client
 	2.添加@EnableDiscoveryClient注解
-	3.配置serviceUrl，application.name
+	3.配置 serviceUrl，application.name(eureka.instance.name的默认值，如果没有，则为unknow)
+	可选：prefer-ip-address
+高可用注册中心：
+	1.eureka 注册中心将自己作为服务向其他注册中心注册自己
+	2.serviceUrl 填写其他注册中心地址
 服务发现与消费：
 	1.服务发现由Eureka客户端完成
-	2.服务消费由ribbon完成
-	3.引入ribbon依赖包
-	4.添加@LoadBalance注解
-	5.使用RestTemplate访问服务提供者
+	2.服务消费由ribbon完成：Ribbon在Eureka服务发现的基础上，实现了一套对服务实例的选择策略。
+	3.引入start-ribbon依赖包
+	4.添加 @LoadBalance 注解
+	5.使用 RestTemplate 访问服务提供者
 	注：Eureka Server依托于强一致性提供高可用性功能
 		Eureka Client处理注册的发现（向注册中心发送心跳更新服务租约，服务注册是服务单元向注册中心登记，服务发现是服务调用方向服务中心咨询服  务，并获取实例清单）
 Eureka基础架构：从服务注册开始到服务调用、各个元素所涉及到的一些重要通信行为
-	1.服务提供者：服务注册、服务同步、服务续约
-	2.服务消费者：获取服务、服务调用、服务下线
-	3.注册中心：失效剔除（每隔60s将清单中90s内没有续约的服务剔除出去）、自我保护（统计心跳失败的比例在15分钟内是否低于85%，Eureka会将注册信息保护起来，所以可能会出现调用失败情况）
+	服务治理机制：
+	1.服务提供者：注册(register-with-eureka)、同步(注册中心转发到其他注册中心)、续约(提供者像注册中心发送心跳，可自定义心跳发送间隔时间[lease-renewal-interval-in-seconds：默认30s]与心跳超时时间[lease-expiration-duration-in-seconds：默认90s])
+	2.服务消费者：获取缓存[register-with-eureka](默认30s间隔[registry-fetch-interval-seconds])，得到元数据信息、调用(通过Region、Zone选择访问实例)、下线(状态改为DOWN)
+	3.注册中心：失效剔除,又名服务检查（默认每隔60s将清单中90s(即心跳超时)内没有续约的服务剔除出去）、自我保护[self-preservation](统计心跳失败的比例在15分钟内是否低于85%，Eureka会将注册信息保护起来，所以可能会出现调用失败情况）
+		注册中心剔除策略：
+			开启自我保护：按照默认情况进行剔除(15分钟内心跳失败低于85%), 所以会较长时间不会剔除失效实例
+			关闭自我保护：默认每隔60s将清单中90s内没有续约的服务剔除出去，在服务端可以将60s(eureka.server.eviction-interval-timer-in-ms)调小，客户端将发送心跳间隔和心跳超时调小，即可测试失效剔除
+		Eureka通过“自我保护模式”来解决这个问题——当Eureka Server节点在短时间内丢失过多客户端时（可能发生了网络分区故障），那么这个节点就会进入自我保护模式。一旦进入该模式，Eureka Server就会保护服务注册表中的信息，不再删除服务注册表中的数据（也就是不会注销任何微服务）。当网络故障恢复后，该Eureka Server节点会自动退出自我保护模式。
+		综上，自我保护模式是一种应对网络异常的安全保护措施。它的架构哲学是宁可同时保留所有微服务（健康的微服务和不健康的微服务都会保留），也不盲目注销任何健康的微服务。使用自我保护模式，可以让Eureka集群更加的健壮、稳定。
+
+
 源码分析：理解各个通信行为如何实现
-	1.@EnableDiscoveryClient作用：开启DiscoveryClient(class)的实例
-	2.Spring Cloud为什么可以方便地切换整合其他服务治理框架：Spring Cloud服务治理提供DiscoveryClient(interface)接口
-	3.EurekaDiscoveryClient继承Spring Cloud DiscoveryClient(instance)接口，并将EurekaClient接口进行封装、真正实现发现服务功能的是继承 	EurekaClient的DiscoveryClient(class)
+	1.@EnableDiscoveryClient作用：开启Spring Cloud DiscoveryClient(instance)的实现类(如EurekaDiscoveryClient)，该类依赖Euereka的DiscoveryClient(class)实现发现服务
+	2.Spring Cloud为什么可以方便地切换整合其他服务治理框架：Spring Cloud服务治理提供 DiscoveryClient(interface) 接口
+	3.EurekaDiscoveryClient(实现对发现服务的封装)继承Spring Cloud DiscoveryClient(instance)接口(提供发现服务方法)、真正实现发现服务的是继承 EurekaClient 的 DiscoveryClient(class)
 	4.EurekaClient功能如下：向Server 注册服务、续约、下线、查询服务实例清单
 	--
 	5.Region、Zone、ServiceUrls关系：一个微服务应用属于一个region，一个region有多个zone，一个zone可以有多个serviceUrls
-	6.服务注册：由DisconveryClient实现，通过构造类调用initScheduledTasks()方法实现注册行为，真正调用注册的是register()方法
-	7.服务获取与续约：initScheduledTasks()中实现服务获取(独立实现在一个if判断中)与续约（与注册成对出现,即在一个if判断中）
-	8.注册中心：ApplicationResource类中addInstance()方法中调用InstanceRegistry.register()方法,register中将注册事件传播出去，并调用super.register()	
+	6.服务注册：由 DisconveryClient 实现，通过构造类调用initScheduledTasks()方法实例化InstanceInfoReplicator，在InstanceInfoReplicator的run方法中调用真正注册register()方法
+	7.服务续约：与注册成对出现,即在一个if判断中，由 HeartbeatThread 调用 DiscoveryClient 的 renew()方法实现
+	8.服务获取：initScheduledTasks()中实现服务获取(独立实现在一个if判断中)，由 CacheRefreshThread 调用 DiscoveryClient 的 refreshRegistry, 然后再调用 fetchRegistry
+	9.注册中心：ApplicationResource 类中 addInstance() 方法中调用InstanceRegistry.register()方法,register 中将注册事件传播出去，并调用super.register()	
 配置详解：
-	1.客户端：服务注册类配置、服务实例类配置(大多数情况都是针对客户端配置)，eureka.client作为前缀
-	2.服务端：大多数情况下不需要修改，eureka.server作为前缀
-服务注册类配置：
-	1.指定注册中心：serviceUrl，生产环境中需要加入安全校验信息
-	2.其他配置：EurekaClientConfigBean中定义配置参数和默认值
-服务实例类配置:
-	1.EurekaInstanceConfigBean中定义
-	2.元数据(服务名称、实例名称、实例IP、端口等)，InstanceInfo 定义了元数据 定义了元数据，自定义元数据可以通过metedateaMap修改
-	3.实例名配置：InstanceInfo中instanceId
-	4.端点配置：可以配置一些端点URL，比如修改URL的路径
-	5.健康监测：Eureka客户端健康监测交给/health端点，实现更加全面的健康维护
-	6.其他配置: EurekaInstanceConfigBean中定义
+	1.客户端：
+		服务注册类配置：包括服务注册中心的地址、服务获取的间隔时间、可用区域等 	
+			eureka.client：serviceUrl, fetch-interval-seconds, region. etc.
+			1.指定注册中心：serviceUrl，生产环境中需要加入安全校验信息
+			2.其他配置：EurekaClientConfigBean 即eureka.client 中定义配置参数和默认值
+		服务实例类配置(大多数情况都是针对客户端配置)：包括实例的名称、IP地址、端口号、健康检查路径、EurekaInstanceConfigBean中定义等
+			eureka.instance: prefer-ip-address, lease-expiration-duration-in-seconds, lease-renewal-interval-in-seconds. etc.
+			1.EurekaInstanceConfigBean中定义
+			2.元数据(服务名称、实例名称、实例IP、端口等)，InstanceInfo 定义了元数据 定义了元数据，自定义元数据可以通过 eureka.instance.metedateaMap 修改
+			3.实例名配置：InstanceInfo 中 instanceId, 默认规则：${spring.cloud.client.hostname}:${spring.application.name}:${spring.application.instance_id:${server.port}},本地测试负载均衡可用采用eureka.instance.instanceId=${spring.application.name}:{random.int}
+			4.端点配置：可以配置一些端点URL，比如修改URL的路径:homePageUrl、statusPageUrl、healthCheckUrl 
+			5.健康监测：默认心跳实现方式可用有效检查客户端 进程 是否运作,但无法保证客户端应用能够 正常提供服务,Eureka客户端健康监测交给/health端点，实现更加全面的健康维护。eureka.client.healthcheck.enabled=true
+	2.服务端：大多数情况下不需要修改，
+		eureka.server:[self-preservation]
+Eureka实战：
+	服务中心：提供服务注册与发现，失效剔除，自我保护
+		1.基本配置：@EnableEurekaServer , port，eureka.instance.[ instance-id, name ], eureka.client.[ fetch-registry, register-with-eureka ]
+		2. eureka.instance.[ prefer-ip-address, ip-address ]：详解见https://www.jianshu.com/p/886947b52cb4  https://blog.csdn.net/hjtlovelife/article/details/91392640
+		3.控制页面：available-replicas：可用分片, registered-replicas：注册分片, unavailable-replicas：不可用分片  
+	服务提供者: 提供服务：注册、同步、续约
+		1.基本配置: @EnableDiscoveryClient, serviceUrl，application.name
+		2.register-with-eureka 必须为true，代表向服务中心注册自己，
+	服务消费者：获取、调用、下线
+		1.基本配置： @EnableDiscoveryClient, serviceUrl，application.name
+		2.Ribbon配置：@LoadBalance， RestTemplate提供Rest访问, 生产环境中使用Feign
+		3.fetch-registry 必须为true，检索服务清单
+	client公用参数：
+		1.region: 默认default (源码：EndpointUtils), zone：默认defaultZone，availability-zonnes：指定zone(源码：EurekaClientConfigBean), serviceUrls：确定region,zone之后,再加载serviceUrls（源码：EurekaClientConfigBean.getEurekaServerServiceUrls）
+	端点配置、健康检测、
+	遗留问题：
+		replicas 如何判断状态
+		hostname 和 ipAddress作用	
+		服务如何正常下线
+		
 负载均衡
 基本概念：
 	1.服务端负载均衡：服务端维护服务清单，通过心跳检测剔除故障的服务端节点，客户端发送请求到负载均衡设备时、通过算法转发到其中一台服务器
