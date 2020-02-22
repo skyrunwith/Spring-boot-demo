@@ -3,48 +3,54 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.fzd</groupId>
-        <artifactId>Spring-boot-demo</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.1.12.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.fzd</groupId>
-    <artifactId>security</artifactId>
+    <artifactId>Spring-boot-demo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Security</name>
-    <description>Demo project for Spring Boot</description>
+    <name>Spring-boot-demo</name>
+    <packaging>pom</packaging>
+    <description>Spring-boot-demo</description>
 
     <properties>
         <java.version>1.8</java.version>
+        <spring-cloud.version>Greenwich.SR5</spring-cloud.version>
+        <mapper.mybatis>2.1.5</mapper.mybatis>
+        <mysql.version>5.1.48</mysql.version>
     </properties>
+
+    <modules>
+        <module>Spring-Security-Authentication</module>
+        <module>Spring-security-Permission</module>
+        <module>Spring-Security-RememberMe</module>
+        <module>Spring-Security-SessionManager</module>
+        <module>Spring-Security-SmsCode</module>
+        <module>Spring-Security-ValidateCode</module>
+        <module>Start-Spring-Security</module>
+    </modules>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.junit.vintage</groupId>
-                    <artifactId>junit-vintage-engine</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
@@ -57,17 +63,9 @@
 
     <repositories>
         <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-        </repository>
-        <repository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+            <id>bdfus-maven</id>
+            <name>bdfus-maven</name>
+            <url>http://192.168.0.103:8081/repository/bdfusgroup/</url>
         </repository>
     </repositories>
     <pluginRepositories>
