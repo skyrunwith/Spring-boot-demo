@@ -16,4 +16,55 @@ Spring Cloud Study:
 			有完备的数据权限机制；
 			开发人员在一个Dashboard上可以查看、管理所有他有权管理的微服务（这里的Dashboard并不是指Eureka Server的界面，而是自己另外做的界面）；
 			在Dashboard的某个地方能直接切换环境，例如一键切换开发、测试、生产环境等
-		
+	5.负载均衡器：Ribbon
+		Ribbon默认为我们提供了很多的负载均衡算法，例如轮询、随机、响应时间加权等——当然，为Ribbon自定义负载均衡算法也非常容易，只需实现IRule 接口即可
+		自定义配置：
+			细粒度配置,针对某服务单独配置
+				Java代码配置，@RibbonClient
+				Properties配置：(属性配置的优先级高于代码配置)
+					service-name.ribbon.NFLoadBalancerRuleClassName=com.netflix.loadbalancer.RandomRule
+			全局配置：
+				@RibbonClients
+				ribbon.NFLoadBalancerRuleClassName=com.netflix.loadbalancer.RandomRule
+		Eager加载：
+			ribbon.eager-load.enabled: true
+			ribbon.eager-load.clients: microservice-provider-user
+	6.Feign
+		Feign 设计思想来源：https://github.com/square/retrofit https://github.com/spring-cloud-incubator/spring-cloud-square 
+		使用方式：@FeignClient(用来创建Ribbon Client)、@EnableFeignClients、
+		FeignClientConfiguration：
+			default bean: Decoder(ResponseEntityDecoder )、Encoder(SpringEncoder)、Logger(Slf4jLogger)、Contract(SpringMvcContract)、Feign.Builder(HystrixFeign.Builder)、Client(LoadBlancerFeignClient)
+			自定义Bean：Logger.Level、Retryer、ErrorDecoder、Request.Options、Collection<RequestInterceptor>、SetterFactory
+		自定义配置：
+			细粒度配置：
+				FeignLogger日志级别：NODE、BASIC(适用于生产环境追踪问题)、HEADERS、FULL
+				@FeignClient(configuration = DefaultRibbonConfig.class)
+			通用配置：
+				通用配置：@EnableFeignClients(defaultConfiguration = DefaultRibbonConfig.class)
+				feign.client.config.default.[connectTimeout, readTimeout, loggerLevel]
+			使用配置属性的优先级更高: feign.client.default-to-properties
+			压缩：
+				feign.compression.[request、response].enabled
+				feign.compression.request.mime-types=text/xml,application/xml,application/json
+				feign.compression.request.min-request-size=2048
+			继承：见番外篇
+		其他特性：
+			生产技巧：Feign如何控制Hystrix的启停、超时、熔断？：http://www.itmuch.com/spring-cloud-sum/feign-hystrix/
+			使用Feign实现Form表单提交：http://www.itmuch.com/spring-cloud-sum/feign-form-params/
+			如何使用Feign构造多参数的请求：http://www.itmuch.com/spring-cloud-sum/feign-multiple-params/
+			Spring Cloud中，Feign常见问题总结：https://www.jianshu.com/p/90ba9f6a7ff3
+			Spring Cloud中，如何解决Feign/Ribbon第一次请求失败的问题？：http://www.itmuch.com/spring-cloud-feign-ribbon-first-request-fail/
+			使用Spring Cloud Feign上传文件：http://www.itmuch.com/spring-cloud-sum/spring-cloud-feign-upload/
+	7.Hytstrix
+		微服务容错三板斧：超市机制、舱壁模式、断路器
+		Hystrix是由Netflix开源的一个延迟和容错库，用于隔离访问远程系统、服务或者第三方库，防止级联失败，从而提升系统的可用性与容错性。
+			包裹请求、跳闸机制、资源隔离、监控、回退机制、自我修复
+		@HystrixCommand
+		Feign 使用 Hystrix
+			服务降级：feign.hystrix.enable=true
+			@FeignClient(fallback, fallbackFactory)
+			局部启用 HystrixFeign.Builder  、局部禁用 Feign.builder
+		Dashboard:
+			hystix.stream端点：加入actuator依赖，暴露 management.endpoints.web.expoure.include=hystrix.stream
+			
+			

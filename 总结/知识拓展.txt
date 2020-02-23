@@ -9,3 +9,4 @@
 	Spring Cloud 版本管理：主版本号.增量版本号
 	Spring Cloud版本发布记录：https://github.com/spring-cloud/spring-cloud-release/releases ，从中我们可清晰看到Spring Cloud版本发布的时间及先后顺序
 	Spring Cloud版本演进计划：https://github.com/spring-cloud/spring-cloud-release/milestones，从中我们可了解Spring Cloud的版本演进计划，例如计划什么时间点发布什么版本等。
+	Feign的GitHub：https://github.com/OpenFeign/feign
