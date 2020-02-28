@@ -2,6 +2,7 @@ package com.fzd.oauth.config;
 
 import com.fzd.oauth.handler.MyAuthenticationFailureHandler;
 import com.fzd.oauth.handler.MyAuthenticationSuccessHandler;
+import com.fzd.oauth.validate.sms.code.SmsAuthenticationConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -25,6 +26,9 @@ public class AuthorizationResourceConfig extends ResourceServerConfigurerAdapter
     @Autowired
     private MyAuthenticationSuccessHandler successHandler;
 
+    @Autowired
+    private SmsAuthenticationConfig smsAuthenticationConfig;
+
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http.formLogin()
@@ -33,9 +37,11 @@ public class AuthorizationResourceConfig extends ResourceServerConfigurerAdapter
                 .failureHandler(failureHandler)
                 .and()
                 .authorizeRequests()
+                .antMatchers("/code/sms").permitAll()
                 .anyRequest()
                 .authenticated()
                 .and()
-                .csrf().disable();
+                .csrf().disable()
+                .apply(smsAuthenticationConfig);
     }
 }
