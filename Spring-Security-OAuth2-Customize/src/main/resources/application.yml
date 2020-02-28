@@ -1,0 +1,24 @@
+#spring:
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#          my-client-1:
+#            authorization-grant-type: authorization_code
+#            client-authentication-method: basic
+#            client-id: abcd
+#            client-name: Client for user scope
+#            client-secret: password
+#            provider: my-oauth-provider
+#            redirect-uri: https://my-redirect-uri.com
+#            scope: user
+
+security:
+  oauth2:
+    client:
+      client-id: test
+      client-secret: test1234
+      registered-redirect-uri: http://mrbird.cc
+#logging:
+#  level:
+#    root: debug
