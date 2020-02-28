@@ -32,3 +32,21 @@ Represent 代表
 peer 同等的人，同辈
 lease 租约
 frequency 频率
+demand 需求
+interaction 交互
+dual 双数
+tutorial 教程、指南
+frequently 频繁的
+archive 文档、档案
+acchive 取得、达到...期望
+Assuming 假设
+intermediary 中间的
+notion、concepts  概念
+minimizes 使什么最小化
+divergence 差异
+impatient 急切的
+middleware 中间件
+inform告知
+issue n问题、v发布(过去式 issued)
+interration 互相作用;交流;互动
+implicit 隐式

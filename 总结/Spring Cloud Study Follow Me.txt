@@ -66,5 +66,61 @@ Spring Cloud Study:
 			局部启用 HystrixFeign.Builder  、局部禁用 Feign.builder
 		Dashboard:
 			hystix.stream端点：加入actuator依赖，暴露 management.endpoints.web.expoure.include=hystrix.stream
-			
-			
+	8.网关
+		为什么使用网关：
+			客户端会多次请求不同服务，增加了客户端的复杂性
+			存在跨域请求，在一定场景下处理相对复杂
+			认证复杂，每个服务都需要独立认证
+			难以重构，如重新划分(即合并或拆分)微服务后，重构工作量太大
+			某些微服务可能使用了防火墙/浏览器不友好的协议，直接访问困难
+		优点：易于监控、易于认证、减少客户端与各个微服务交互次数
+		Zuul功能：借助过滤器实现
+			身份认证与安全：识别每个资源的验证请求，并拒绝不符请求
+			审查与监控：在边缘位置追踪有意义的数据和统计结果，从而为我们带来精确的生产视图
+			动态路由：动态的将请求路由到不同的后端集群
+			压力测试：主键增加指向集群的流量，以了解性能
+			负载分配：为每一种负载类型分配对应容量，并且用超出限定值的请求
+			静态相应处理：在边缘位置直接简历部分相应，避免其转发到内部集群
+			多区域弹性：跨越AWS Region进行请求路由，旨在实现ELB(Elastic Load Balancing)使用的多样化，以及让系统的边缘更贴近系统的使用者
+		Zuul问题：
+			开源版Zuul以上功能一个都没有，Spring Cloud团队自己开发了Gateway
+		Zuul默认使用Apache Http Client,用户可自定义使用okhtt3.OkHttpClient或RestClient：ribbon.okhttp.enabled=true，ribbon.restclient.enabled=true
+		Zuul路由配置：
+			指定微服务访问路径：zuul.routes.[service-id]=path
+			忽略微服务：zuul.ignore-services=[service-id], [service-id]
+			同时指定微服务的serviceId和对应路径：zuul.routes.[service-id, path]
+			使用正则表达式指定Zuul的路由匹配规则：PatternServiceRouteMapper
+			路由前缀：zuul.prefix, zuul.skip-prefix
+			忽略某些路径：zuul.ignoredPatterns
+		Zuul深入：
+			过滤器详解：过滤器声明周期、如何自定义过滤器、如何禁用过滤器等
+			内置过滤器：@EnableZuulServer, @EnableZuulProxy开启不同过滤器
+			Zuul回退：Zuul client实现FallbackProvider
+			高可用：
+				Zuul注册到Eureka Server上：部署多个Zuul节点即可实现高可用
+				zuul未注册到Eureka Server上：需借助Nginx，H5等负载均衡器
+			实战：
+				配置zuul的Hystrix线程池
+		Sleuth:
+			问题：
+				调用发生失败，快速定位出是哪个环节出了问题。是微服务问题，还是网络？
+				调用慢，如何快速找到性能瓶颈？
+			入门：
+				添加依赖：spring-cloud-starter-sleuth
+				显示日志：logging:
+							level:
+							  root: INFO
+								org.springframework.cloud.sleuth: DEBUG
+				基本概念：Span、Trace、Anotation
+			zipkin组合使用：
+				添加依赖：spring-cloud-starter-zipkin
+				安装zipkin：curl -sSL https://zipkin.io/quickstart.sh | bash -s
+				访问zipkin：http://localhost:9411
+				配置zipkin：
+					spring:
+					  zipkin:
+						base-url: http://localhost:9411
+					  sleuth:
+						sampler:
+						  # 采样率，模式0.1，也就是10%，为了便于观察效果，改为1.0，也就是100%。生产环境建议保持默认。
+						  probability: 1.0
