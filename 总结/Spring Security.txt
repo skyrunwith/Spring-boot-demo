@@ -7,8 +7,8 @@ Spring Security概要：
 	3.开启Security：
 		@EnableWebSecurity、@EnableWebMvcSercurity(该注解配置了一个Spring mvc参数解析器，能够通过带有 @AuthenticationPrincipal 的注解获取用户的 principal,如果使用Spring表单绑定标签库，还可以自动添加 CSRF)
 		注解生效必须配置：WebSecurityConfigurer 或 WebSecurityConfigurerAdapter
-	4.查询信息服务(即用户信息查询)：
-		configure(AuthenticationManagerBuilder auth)
+	4.查询信息服务()：
+		即用户信息查询:configure(AuthenticationManagerBuilder auth)
 		基于内存：auth.inMemoryAuthentication().withUser()
 		基于数据库表(自定义SQL和使用默认SQL):auth.jdbcAuthentication().dataSource(dataSource);
 		基于LDAP验证：auth.ldapAuthentication()
@@ -74,12 +74,12 @@ Spring Security基本原理：
 		继承自 Filter
 		当请求到达的时候，FilterChainProxy会调用dofilter()方法，会遍历所有的SecurityFilterChain，对匹配到的url，则一一调用SecurityFilterChain中的filter做认证授权。FilterChainProxy的dofilter()中调用了doFilterInternal()方法
 	5.HttpSecurity：生成SecurityFilterChain
-		HttpSecurity与WebSecurity一样，都继承了AbstractConfiguredSecurityBuilder类，而WebSecurity的build和doBuild方法和LinkedHashMap属性，均来自AbstractConfiguredSecurityBuilder，故HttpSecurity的build方法代码与WebSecurity的相同，区别在于LinkedHashMap存储的东西不同，HttpSecurity正是通过如此来生成SecurityFilterChain类的。
+		HttpSecurity与WebSecurity一样，都继承了 AbstractConfiguredSecurityBuilder 类，而 WebSecurity 的 build 和 doBuild 方法和 LinkedHashMap 属性，均来自 AbstractConfiguredSecurityBuilder, 故 HttpSecurity 的 build 方法代码与 WebSecurity 的相同，区别在于 LinkedHashMap 存储的东西不同, HttpSecurity 正是通过如此来生成 SecurityFilterChain 类的。
 	总结：
-		1.Spring Security启动过程中通过WebSecurityConfiguration实例化WebSecurity
-		2.WebSecurityConfiguration会将使用者编写的WebSecurityConfig类放入WebSecurity中的LinkedHashMap中
-		3.在构建WebSecurity的时候，会调用WebSecurity的doBuild()方法，这个方法是一个核心方法
-		4.doBuild中的init方法将会调用LinkedHashMap中元素的init方法（这里的元素是WebSecurityConfig），然后WebSecurityConfig的init方法会调用configure方法，调用configure方法后，将会初始化HttpSecurity构建各种Filter，这时HttpSecurity将会加入WebSecurity中。
+		1.Spring Security 启动过程中通过 WebSecurityConfiguration 实例化 WebSecurity
+		2.WebSecurityConfiguration 会将使用者编写的 WebSecurityConfig 类放入 WebSecurity 中的 LinkedHashMap 中
+		3.在构建 WebSecurity 的时候，会调用 WebSecurity 的 doBuild() 方法，这个方法是一个核心方法
+		4.doBuild 中的 init 方法将会调用 LinkedHashMap 中元素的 init 方法（这里的元素是WebSecurityConfig），然后WebSecurityConfig的init方法会调用configure方法，调用configure方法后，将会初始化HttpSecurity构建各种Filter，这时HttpSecurity将会加入WebSecurity中。
 		5.doBuild中的init方法调用完后将会调用下一个performBuild()方法，该方法会获取到HttpSecurity调用其doBuild方法构造SecurityFilterChain
 		6.将获取到的SecurityFilterChain构建成一个FilterChainProxy类，作为Spring Security的顶层filter
 		7.至此Spring Security的Filter构建完成
