@@ -1,49 +1,60 @@
 Oauth2 实战：
 	1.Oauth2 四种授权模式：授权码、密码、客户端、简化模式
+	服务端对象：User(用户对象：包含用户名密码等基本信息，UserDetailService(加载用户对象：通过用户名加载UserDetails对象)，Oauth2.client(client对象：包含client-id、c	lient-secret、registered-redirect-uri等基本信息)，EnableAuthorizationServer(创建认证服务器对象)
 	2.配置认证服务器：加入OAuth2包：spring-cloud-starter-oauth2,加上@EnableAuthorizationServer
 	3.授权码模式: 
-		获取授权码Authorization_code：uri:oauth/authorize, params: response_type:code, client_id,redirect_uri,scope,state
+	流程：
+		获取授权码Authorization_code：uri:oauth/authorize, params: response_type:code, client_id(配置),redirect_uri(配置),scope:(配置),state(任一)
 		用户同意Approval：uri:oauth/authorize, params:user_oauth_approval:true
 		用户拒绝Deny：uri:oauth/authorize, params:user_oauth_approval:false
 		获取令牌Token: uri:oauth/token, params: grant_type,code, client_id,redirect_uri,scope, Header:Authorization:Basic client_id:client_secret
 	4.密码模式：
 		获取令牌Token：uri:oauth/token, params: username, password, Header:Authorization:Basic client_id:client_secret
-		生成Token流程：request -> ClientId -> ClientDetailService -> ClientDetails + new TokenRequest -> OAuth2Request + Authentication -> 
-			new OAuth2Authenctication + AuthorizationServerTokenServices -> OAuth2AccessToken -> response
+	
 		自定义用户密码获取Token:
 			解析Header：Auhorization
 			在Login SuccessHandler中自定义Token生成流程，即可实登录过程生成Token
+			通过SuccessHandler生成Token流程：request -> ClientId(Header中获取) -> ClientDetailService(Autowire) -> ClientDetails(ClientDetailService获取,校验clientId和clientSecret) + new TokenRequest -> OAuth2Request(由TokenRequest的CreateRquest生成,参数为 ClientDetails) + Authentication(Handler 回调参数) -> 
+			new OAuth2Authenctication(参数为 TokenRequest, Authentication) + AuthorizationServerTokenServices(Autowire) -> OAuth2AccessToken(AuthorizationServerTokenServices.createAccessToken生成，参数为 OAuth2Authenctication) -> response
 	5.资源服务器：
 		加上@EnableResourceServer
-	6.短信验证码获取令牌：
+		访问资源：
+			uri:xxxx, Header: Auhorization: bearer(前缀) token(此处token为获得的token)
+	6.短信验证码获取令牌Token：通过该方式自定义后可能会影响其他授权模式：如授权码模式
 		在短信验证码登录的基础上修改：
 			修改验证码存储：session 转为 redis
 			SuccessHandler：在短信认证成功后返回 Token
 	7.自定义Token配置：
-		不同client_id对应不同token、token有效时间
-		实现：
-			@EnableAuthorizationServer标记的Config类继承 AuthorizationServerConfigurerAdapter，重写 configure(ClientDetailsServiceConfigurer clients)，通过clients参数构建client
-		token存储策略
-		实现：
-			定义 TokenStore，推荐采用RedisTokenStore， 重写 configure(AuthorizationServerEndpointsConfigurer endpoints)，通过endpoints参数可以构建 AuthenticationManager(通过重载 WebSecurityConfigurerAdapter 的 authenticationManager 获得 Bean)、UserDetailsService、TokenStore
+		ClientDetails：不同client_id对应不同token、secret、scope、token有效时间、grant_type：如 authorizedGrantTypes("password")限制为密码模式,redirect_uri
+			继承 AuthorizationServerConfigurerAdapter，重写 configure(ClientDetailsServiceConfigurer clients)，通过clients参数构建client。@EnableAuthorizationServer 开启资源服务器
+		token存储策略：如数据库、内存、redis等，与security存储用户一样。
+			定义 TokenStore，推荐采用 RedisTokenStore， 重写 configure(AuthorizationServerEndpointsConfigurer endpoints)，通过endpoints参数可以构建 AuthenticationManager(通过重载 WebSecurityConfigurerAdapter 的 authenticationManager 获得 Bean)、UserDetailsService、TokenStore
 	8.JWT替换默认Token
-		定义Bean：JwtTokenStore、JwtAccessTokenConvert(TokenEnhancer 的实现)
-		endpoints 配置 JwtTokenStore、JwtAccessTokenConvert 生效
-		拓展JWT:
-			自定义实现 TokenEnhancer, 添加额外信息
+		定义Bean：JwtTokenStore：依赖于 JwtAccessTokenConvert、 JwtAccessTokenConvert(TokenEnhancer 的实现)：可以设置签名秘钥
+		endpoints的set方法配置 JwtTokenStore、JwtAccessTokenConvert 生效
+		拓展JWT: 在JWT中添加额外信息
+			自定义继承实现 TokenEnhancer
+			创建 TokenEnhancerChain 对象：在该对象添加需要的TokenEnhancer对象
+			endpoints中设置 TokenEnhancerChain
 		Java解析JWT:
 			添加依赖：jjwt 
 			调用：Jwts.parser().setSigningKey("test_key".getBytes(StandardCharsets.UTF_8)).parseClaimsJws(token)
 	9.刷新Token；
-		授权方式中加入 clientBuilder.authorizedGrantTypes("refresh_token")
+		ClientDetail授权方式中加入 clientBuilder.authorizedGrantTypes("refresh_token")
 		刷新Token：uri:oauth/token, params: grant_type:refresh_token, refresh_token:xxxxxxx, Header:Auhorization:Basic client_id:client_secret
 	10.Sso 单点登录：
 		认证服务器：
-			配置 WebSecurityConfigurerAdapter, AuthorizationServerConfigurerAdapter(jwt、client、security)
-			@EnableAuthorizationServer
+			基本配置：
+				WebSecurityConfigurerAdapter: 配置哪些URL需要 authenticated(认证),
+				UserDetailService: 加载用户对象
+				User
+			核心配置：
+				AuthorizationServerConfigurerAdapter(jwt、client、endpoints):参照上面配置
+				AuthorizationServerConfigurerAdapter 中 AuthorizationServerSecurityConfigurer：security.tokenKeyAccess("isAuthenticated()"); // 获取密钥需要身份认证
+				@EnableAuthorizationServer
 		客户端：
 			@EnableOAuth2Sso
-			yml中配置 security.oauth2.client.[client_id, client_secret, user_authorization_uri, access_token_uri], security.oauth2.resource.jwt.key-uri:http://ip:port/context_path/ouath/test_key
+			yml中配置 security.oauth2.client.[client_id, client_secret, user_authorization_uri:/oauth/authorize, access_token_uri:/oauth/token], security.oauth2.resource.jwt.key-uri:http://ip:port/{context_path}/ouath/test_key
 			自动授权：在client中设置autoApprove为true
-			权限校验：配置 WebSecurityConfigurerAdapter, @EnableGlobalMethodSecurity(prePostEnabled = true), @PreAuthorize
+			权限校验：配置 WebSecurityConfigurerAdapter, @EnableGlobalMethodSecurity(prePostEnabled = true),校验 @PreAuthorize注解的方法：@PreAuthorize("hasAuthority('user:update')")
 		

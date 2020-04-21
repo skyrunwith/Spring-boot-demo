@@ -67,13 +67,13 @@ Spring Security基本原理：
 			遍历 securityFilterChainBuilders 中的 HttpSecurity，调用 httpSecurity.build 方法 构建 SecurityFilterChain
 			以 SecurityFilterChain 为参数构建 FilterChainProxy 
 			返回 FilterChainProxy
-	3.WebSecurityConfigurerAdapter：SecurityConfigurer.init 方法调用后
-		init 方法中调用 getHttp(),初始化 HttpSecurity，并调用 configure （至此 configure 调用分析完成）
+	3.WebSecurityConfigurerAdapter：作用于回调 init和config方法
+		init 方法中调用 getHttp(),初始化 AuthenticationManager(回调 configure)，初始化 HttpSecurity(回调configure)，并回调 WebSecurityConfigurerAdapter的 configure方法 （至此 configure 调用分析完成）
 		init 方法调用 webSecurity.addSecurityFilterChainBuilder , 将 HttpSecurity 放入 WebSecurity 变量名为 securityFilterChainBuilders 的集合中
 	4.FilterChainProxy：
 		继承自 Filter
 		当请求到达的时候，FilterChainProxy会调用dofilter()方法，会遍历所有的SecurityFilterChain，对匹配到的url，则一一调用SecurityFilterChain中的filter做认证授权。FilterChainProxy的dofilter()中调用了doFilterInternal()方法
-	5.HttpSecurity：生成SecurityFilterChain
+	5.HttpSecurity：生成 SecurityFilterChain
 		HttpSecurity与WebSecurity一样，都继承了 AbstractConfiguredSecurityBuilder 类，而 WebSecurity 的 build 和 doBuild 方法和 LinkedHashMap 属性，均来自 AbstractConfiguredSecurityBuilder, 故 HttpSecurity 的 build 方法代码与 WebSecurity 的相同，区别在于 LinkedHashMap 存储的东西不同, HttpSecurity 正是通过如此来生成 SecurityFilterChain 类的。
 	总结：
 		1.Spring Security 启动过程中通过 WebSecurityConfiguration 实例化 WebSecurity

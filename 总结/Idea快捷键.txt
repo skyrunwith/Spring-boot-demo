@@ -19,6 +19,8 @@ Ctrl+y 删除行
 Ctrl+F4 关闭当前编辑面板
 //调试
 Alt+F8 计算表达式
+Shift+F7 Smart Step Into
+https://mp.weixin.qq.com/s/HDYY5DN_FD8wgp8Q9u4_Sw
 //源码
 Ctrl+B 查看某个方法被哪些地方调用、跳进方法内部
 Ctrl+Alt+B 查看一个类/方法的实现类/方法的实现类/方法

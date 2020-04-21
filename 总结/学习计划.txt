@@ -1,0 +1,3 @@
+学习计划：
+	JDBC原理，Mybatis原理
+	spring boot日志：logback和log4j2选择
