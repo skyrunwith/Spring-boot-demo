@@ -63,3 +63,9 @@ capable 有能力的
 slightly 轻微地
 other than 除了
 rely 依赖
+inconsistent 不一致的
+recover frome 从...恢复
+extremely 极其 eg：extremely easy
+doubt 怀疑
+specify 指明
+encapsulate 封装
